@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Para Marely... 💜🌅</title>
+    <title>Para Marely... 💜✨</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <style>
         body, html {
@@ -99,19 +99,24 @@
             filter: drop-shadow(0 10px 10px rgba(0,0,0,0.6));
         }
 
-        /* --- OBJETOS CAYENDO --- */
+        /* --- OBJETOS CAYENDO CON BRILLO ESPECIAL --- */
         .falling-item {
             position: absolute;
-            font-size: 2.2rem;
+            font-size: 2.3rem;
             font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
             z-index: 10;
-            animation: tumble 4s linear infinite;
+            animation: tumble 4s linear infinite, glowPulse 1.5s infinite alternate;
         }
 
         @keyframes tumble {
             0% { transform: rotate(-15deg); }
             50% { transform: rotate(15deg); }
             100% { transform: rotate(-15deg); }
+        }
+
+        @keyframes glowPulse {
+            0% { filter: drop-shadow(0 0 2px #fff); }
+            100% { filter: drop-shadow(0 0 12px #ffeb3b) drop-shadow(0 0 20px #e91e63); }
         }
 
         /* --- CHISPAS MÁGICAS --- */
@@ -131,28 +136,62 @@
             100% { transform: scale(0) translate(var(--tx), var(--ty)); opacity: 0; }
         }
 
-        /* --- MENSAJES FLOTANTES --- */
-        #toast-message {
+        /* --- VENTANA MODAL SORPRESA (PAUSA EL JUEGO) --- */
+        #modal-message {
+            display: none;
             position: absolute;
-            top: 40%; left: 50%;
-            transform: translate(-50%, -50%) scale(0.8);
-            background: rgba(255, 255, 255, 0.95);
-            color: #4a148c;
-            padding: 15px 25px;
-            border-radius: 15px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-align: center;
-            width: 85%; max-width: 340px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            border: 2px solid #ce93d8;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 60;
+            justify-content: center;
+            align-items: center;
             opacity: 0;
-            pointer-events: none;
-            z-index: 30;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.4s ease;
         }
 
-        .show-toast { opacity: 1 !important; transform: translate(-50%, -50%) scale(1) !important; }
+        .modal-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #ce93d8;
+            border-radius: 24px;
+            padding: 35px 25px;
+            width: 85%; max-width: 380px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+            transform: scale(0.8);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-icon {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+        }
+
+        .modal-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            line-height: 1.6;
+            color: #4a148c;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        .btn-modal {
+            background: linear-gradient(135deg, #7b1fa2, #4a148c);
+            color: #ffffff;
+            border: none;
+            padding: 12px 30px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(123, 31, 162, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-modal:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(123, 31, 162, 0.6); }
 
         /* --- PANTALLA DE VICTORIA (LA CARTA) --- */
         #victory-screen {
@@ -268,13 +307,21 @@
 
     <!-- PANTALLA DEL JUEGO -->
     <div id="game-screen">
-        <div class="game-instructions" id="instruction-text">Atrapa luz y magia para cultivar tu jardín ✨</div>
-        <div id="toast-message"></div>
+        <div class="game-instructions" id="instruction-text">Atrapa destellos para revelar mensajes secretos ✨</div>
         <div id="player">🧺</div>
     </div>
 
     <!-- EL JARDÍN -->
     <div id="garden-floor"></div>
+
+    <!-- VENTANA MODAL DE MENSAJES SORPRESA -->
+    <div id="modal-message">
+        <div class="modal-card" id="modal-card-inner">
+            <div class="modal-icon" id="modal-icon">✨</div>
+            <div class="modal-text" id="modal-text">Mensaje secreto aquí</div>
+            <button class="btn-modal" onclick="cerrarModal()">Continuar cultivando</button>
+        </div>
+    </div>
 
     <!-- PANTALLA DE VICTORIA -->
     <div id="victory-screen">
@@ -284,7 +331,7 @@
                 <div class="intro-victoria">✨ Así como este jardín floreció con paciencia, así florece lo que siento por ti ✨</div>
                 <div class="cuerpo-carta">
                     Verás que entre las flores de este jardín también hay detalles de <span class="texto-bold">chocolate y menta</span>, porque no se me olvida lo que te gusta y siempre quiero sacarte una sonrisa.<br><br>
-                    Quiero ser muy sincero contigo. <span class="texto-bold">Estoy dispuesto a esperarte</span>, incluso si eso significa aguardar días por un solo mensaje tuyo. Me interesa conocer a fondo tu forma de amar y de querer, y descubrir cada una de tus facetas. <span class="resaltado">Estoy dispuesto a hacer todo lo necesario para ganarme tu cariño</span> y avanzar exactamente a tu propio ritmo.<br><br>
+                    Quiero ser muy sincero contigo. <span class="texto-bold">Estoy dispuesto a esperarte</span>, incluso si eso significa aguardar días por un solo mensaje tuyo. Me interesa conocer a fondo tu forma de amar y de querer, y descubrir cada una de las facetas que te hacen ser tú. <span class="resaltado">Estoy dispuesto a hacer todo lo necesario para ganarme tu cariño</span> y avanzar exactamente a tu propio ritmo.<br><br>
                     Las cosas más hermosas toman tiempo en crecer. Sé lo muchísimo que vales, y te lo voy a demostrar todos los días. Porque alguien como tú, vale absolutamente toda la espera del mundo.
                 </div>
                 <span class="firma">Con cariño, Ángel</span>
@@ -299,7 +346,12 @@
         const gardenFloor = document.getElementById('garden-floor');
         const sunriseSky = document.getElementById('sunrise-sky');
         const instructionText = document.getElementById('instruction-text');
-        const toastMessage = document.getElementById('toast-message');
+        
+        const modalMessage = document.getElementById('modal-message');
+        const modalCardInner = document.getElementById('modal-card-inner');
+        const modalText = document.getElementById('modal-text');
+        const modalIcon = document.getElementById('modal-icon');
+
         const victoryScreen = document.getElementById('victory-screen');
         const cardContent = document.getElementById('card-content');
         
@@ -307,23 +359,25 @@
         let itemsOnScreen = [];
         let spawnInterval;
         let gameLoop;
-        let toastTimeout;
         
         let score = 0;
-        const targetScore = 20;
+        const targetScore = 15; // 15 destellos para completar el jardín y la sorpresa
 
-        // Elementos mágicos 100% compatibles con cualquier celular
-        const fallingTypes = ['✨', '☀️', '💜', '🌿', '🍫'];
-        // Flores del jardín
+        // Objetos mágicos que caen
+        const fallingTypes = ['✨', '💜', '🌿', '🍫', '🌸'];
         const gardenFlowers = ['🪻', '🌷', '🌿', '🌻', '🌸', '💜'];
 
-        const romaticMessages = [
-            "Con un poco de paciencia...",
-            "Todo lo hermoso toma tiempo...",
-            "Me encanta tu toque de menta 🌿",
-            "Floreciendo poco a poco...",
-            "El amanecer se acerca ✨"
+        // Los mensajes románticos especiales que detienen el juego
+        const secretMessages = [
+            { icon: '💜', text: "Cada destello que atrapas me recuerda a lo especial que eres." },
+            { icon: '🌿', text: "Me encanta tu toque favorito de menta, nunca cambia eso." },
+            { icon: '✨', text: "Con un poco de paciencia, todo lo hermoso termina floreciendo." },
+            { icon: '🍫', text: "Para mi persona favorita y su detalle más dulce." },
+            { icon: '🌅', text: "El amanecer se acerca, al igual que la sorpresa final..." }
         ];
+
+        // Momentos exactos de la puntuación en los que salta una pausa romántica
+        const triggerScores = [3, 6, 9, 12, 15];
 
         // --- MOVIMIENTO ---
         function movePlayer(x) {
@@ -338,7 +392,6 @@
         gameScreen.addEventListener('touchmove', (e) => movePlayer(e.touches[0].clientX));
         gameScreen.addEventListener('mousemove', (e) => movePlayer(e.clientX));
 
-        // --- CREAR OBJETOS CAYENDO ---
         function spawnItem() {
             if (!isGameRunning) return;
             
@@ -352,7 +405,6 @@
             itemsOnScreen.push(item);
         }
 
-        // --- PLANTAR UNA FLOR EN EL JARDÍN ---
         function plantFlower(xPos) {
             const flower = document.createElement('div');
             flower.className = 'planted-flower';
@@ -384,13 +436,36 @@
             }
         }
 
-        function showToast(text) {
-            clearTimeout(toastTimeout);
-            toastMessage.innerText = text;
-            toastMessage.classList.add('show-toast');
-            toastTimeout = setTimeout(() => {
-                toastMessage.classList.remove('show-toast');
-            }, 3000); 
+        // --- PAUSAR Y MOSTRAR MENSAJE ESPECIAL ---
+        function pausarConMensaje(indexMsg) {
+            isGameRunning = false; // Detiene el motor del juego
+
+            const data = secretMessages[indexMsg];
+            modalIcon.innerText = data.icon;
+            modalText.innerText = data.text;
+
+            modalMessage.style.display = 'flex';
+            setTimeout(() => {
+                modalMessage.style.opacity = '1';
+                modalCardInner.style.transform = 'scale(1)';
+            }, 50);
+        }
+
+        function cerrarModal() {
+            modalMessage.style.opacity = '0';
+            modalCardInner.style.transform = 'scale(0.8)';
+            
+            setTimeout(() => {
+                modalMessage.style.display = 'none';
+
+                // Si ya llegó al puntaje máximo, abrir la carta de victoria
+                if (score >= targetScore) {
+                    ganarJuego();
+                } else {
+                    isGameRunning = true; // Reanudar juego
+                    updateGame();
+                }
+            }, 400);
         }
 
         // --- MOTOR DEL JUEGO ---
@@ -405,7 +480,6 @@
 
                 const itemRect = item.getBoundingClientRect();
 
-                // Colisión (Objeto Atrapado)
                 if (
                     itemRect.bottom >= playerRect.top + 20 &&
                     itemRect.top <= playerRect.bottom &&
@@ -423,14 +497,11 @@
                     const opacityLevel = score / targetScore;
                     sunriseSky.style.opacity = opacityLevel;
 
-                    if (score === 4) showToast(romaticMessages[0]);
-                    if (score === 8) showToast(romaticMessages[1]);
-                    if (score === 12) showToast(romaticMessages[2]);
-                    if (score === 16) showToast(romaticMessages[3]);
-
-                    if (score >= targetScore) {
-                        showToast(romaticMessages[4]);
-                        setTimeout(ganarJuego, 2000); 
+                    // Verificar si coincide con una puntuación para mostrar mensaje sorpresa
+                    const triggerIndex = triggerScores.indexOf(score);
+                    if (triggerIndex !== -1) {
+                        pausarConMensaje(triggerIndex);
+                        return; // Sale del ciclo para pausar inmediatamente
                     }
 
                     player.style.transform = 'translateX(-50%) scale(1.15)';
@@ -442,14 +513,15 @@
                 }
             });
 
-            gameLoop = requestAnimationFrame(updateGame);
+            if (isGameRunning) {
+                gameLoop = requestAnimationFrame(updateGame);
+            }
         }
 
         function ganarJuego() {
             isGameRunning = false;
             cancelAnimationFrame(gameLoop);
             clearInterval(spawnInterval);
-            toastMessage.classList.remove('show-toast');
             instructionText.style.opacity = '0';
 
             itemsOnScreen.forEach(item => item.remove());
@@ -480,11 +552,11 @@
         }
 
         function iniciarJuego() {
-            spawnInterval = setInterval(spawnItem, 650); 
+            spawnInterval = setInterval(spawnItem, 750); 
             updateGame();
         }
 
         iniciarJuego();
     </script>
 </body>
-</html> 
+</html>
