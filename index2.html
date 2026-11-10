@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Para Marely... 💜🌅</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            height: 100vh; width: 100vw;
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            touch-action: none; 
+            background-color: #090a0f; /* Noche profunda por defecto */
+        }
+
+        /* --- CAPAS DEL CIELO (NOCHE Y AMANECER) --- */
+        #night-sky {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at bottom, #1b2735 0%, #090a0f 100%);
+            z-index: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .stars {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: transparent url('https://www.transparenttextures.com/patterns/stardust.png') repeat;
+            opacity: 0.6;
+        }
+
+        #sunrise-sky {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            /* Degradado de amanecer romántico */
+            background: linear-gradient(to bottom, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            z-index: 2;
+            opacity: 0; /* Empieza invisible, se revela al jugar */
+            transition: opacity 0.5s ease;
+        }
+
+        /* --- PANTALLA DEL JUEGO --- */
+        #game-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10;
+        }
+
+        .game-instructions {
+            position: absolute;
+            top: 25px;
+            width: 100%;
+            font-size: 1rem;
+            color: #ffffff;
+            text-align: center;
+            font-weight: 600;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+            z-index: 15;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        /* --- EL JARDÍN (DONDE CRECEN LAS FLORES) --- */
+        #garden-floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            z-index: 5;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .planted-flower {
+            position: absolute;
+            bottom: -10px;
+            font-size: 2.5rem;
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+            transform-origin: bottom center;
+            animation: sprout 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.3));
+        }
+
+        @keyframes sprout {
+            0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* --- JUGADOR (MANITAS/CANASTA) --- */
+        #player {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3.5rem;
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+            transition: left 0.08s ease-out;
+            z-index: 20;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+        }
+
+        /* --- OBJETOS CAYENDO --- */
+        .falling-item {
+            position: absolute;
+            font-size: 2.2rem;
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+            z-index: 10;
+            animation: tumble 4s linear infinite;
+        }
+
+        @keyframes tumble {
+            0% { transform: rotate(-15deg); }
+            50% { transform: rotate(15deg); }
+            100% { transform: rotate(-15deg); }
+        }
+
+        /* --- CHISPAS MÁGICAS --- */
+        .sparkle {
+            position: absolute;
+            width: 8px; height: 8px;
+            background: #ffffff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 25;
+            box-shadow: 0 0 10px #fff;
+            animation: burst 0.6s ease-out forwards;
+        }
+
+        @keyframes burst {
+            0% { transform: scale(1) translate(0, 0); opacity: 1; }
+            100% { transform: scale(0) translate(var(--tx), var(--ty)); opacity: 0; }
+        }
+
+        /* --- MENSAJES FLOTANTES --- */
+        #toast-message {
+            position: absolute;
+            top: 35%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(255, 255, 255, 0.9);
+            color: #4a148c;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-align: center;
+            width: 80%; max-width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 2px solid #ce93d8;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 30;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .show-toast { opacity: 1 !important; transform: translate(-50%, -50%) scale(1) !important; }
+
+        /* --- PANTALLA DE VICTORIA (LA CARTA) --- */
+        #victory-screen {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 35px 30px;
+            width: 90%; max-width: 500px;
+            max-height: 85vh;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            display: flex; flex-direction: column;
+            box-sizing: border-box;
+            transform: translateY(30px);
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #333;
+        }
+
+        .carta-scroll-area {
+            overflow-y: auto;
+            max-height: 65vh;
+            padding-right: 10px;
+            text-align: justify;
+            scrollbar-width: thin;
+            scrollbar-color: #ce93d8 transparent;
+        }
+
+        .carta-scroll-area::-webkit-scrollbar { width: 5px; }
+        .carta-scroll-area::-webkit-scrollbar-thumb { background-color: #ce93d8; border-radius: 10px; }
+
+        .saludo {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3.5rem;
+            color: #7b1fa2;
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+
+        .intro-victoria {
+            text-align: center;
+            font-weight: 700;
+            color: #d81b60;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .cuerpo-carta {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 25px;
+        }
+
+        .resaltado { color: #d81b60; font-weight: bold; font-style: italic; }
+        .texto-bold { font-weight: 700; color: #7b1fa2; }
+
+        .firma {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: #7b1fa2;
+            text-align: right;
+            display: block;
+            margin-top: 20px; margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .btn-regresar {
+            background: linear-gradient(135deg, #7b1fa2, #4a148c);
+            color: #ffffff;
+            border: none;
+            padding: 12px 30px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 15px auto 0;
+            display: block;
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(123, 31, 162, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-regresar:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(123, 31, 162, 0.6); }
+
+        @media (max-width: 600px) {
+            .glass-card { padding: 30px 20px; width: 92%; }
+            .saludo { font-size: 3rem; }
+            .cuerpo-carta { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CIELOS (NOCHE A DÍA) -->
+    <div id="night-sky"><div class="stars"></div></div>
+    <div id="sunrise-sky"></div>
+
+    <!-- PANTALLA DEL JUEGO -->
+    <div id="game-screen">
+        <div class="game-instructions" id="instruction-text">Atrapa luz y agua para cultivar tu jardín ✨</div>
+        <div id="toast-message"></div>
+        <div id="player">🤲</div>
+    </div>
+
+    <!-- EL JARDÍN (DÓNDE CRECEN LAS FLORES) -->
+    <div id="garden-floor"></div>
+
+    <!-- PANTALLA DE VICTORIA -->
+    <div id="victory-screen">
+        <div class="glass-card" id="card-content">
+            <div class="carta-scroll-area">
+                <h2 class="saludo">Mi querida Marely,</h2>
+                <div class="intro-victoria">✨ Así como este jardín floreció con paciencia, así florece lo que siento por ti ✨</div>
+                <div class="cuerpo-carta">
+                    Verás que entre las flores de este jardín también hay detalles de <span class="texto-bold">chocolate y menta</span>, porque no se me olvida lo que te gusta y siempre quiero sacarte una sonrisa.<br><br>
+                    Quiero ser muy sincero contigo. <span class="texto-bold">Estoy dispuesto a esperarte</span>, incluso si eso significa aguardar días por un solo mensaje tuyo. Me interesa conocer a fondo tu forma de amar y de querer. Sé que a veces puedes ser un poco fría al escribir, pero eso no me asusta; al contrario, <span class="resaltado">estoy dispuesto a hacer todo lo necesario para ganarme tu cariño</span> y demostrarte tanta calidez que ese hielo se derrita a su propio ritmo.<br><br>
+                    Las cosas más hermosas toman tiempo en crecer. Sé lo muchísimo que vales, y te lo voy a demostrar todos los días. Porque alguien como tú, vale absolutamente toda la espera del mundo.
+                </div>
+                <span class="firma">Con cariño, Ángel</span>
+            </div>
+            <button class="btn-regresar" onclick="reiniciarJuego()">Cultivar de nuevo</button>
+        </div>
+    </div>
+
+    <script>
+        const player = document.getElementById('player');
+        const gameScreen = document.getElementById('game-screen');
+        const gardenFloor = document.getElementById('garden-floor');
+        const sunriseSky = document.getElementById('sunrise-sky');
+        const instructionText = document.getElementById('instruction-text');
+        const toastMessage = document.getElementById('toast-message');
+        const victoryScreen = document.getElementById('victory-screen');
+        const cardContent = document.getElementById('card-content');
+        
+        let isGameRunning = true;
+        let itemsOnScreen = [];
+        let spawnInterval;
+        let gameLoop;
+        let toastTimeout;
+        
+        let score = 0;
+        const targetScore = 20;
+
+        // Elementos que caen del cielo para "alimentar" el jardín
+        const fallingTypes = ['💧', '☀️', '💧', '☀️', '💜', '🌿', '🍫'];
+        // Flores que crecerán en el piso cuando atrapes algo
+        const gardenFlowers = ['🪻', '🌷', '🌿', '🌻', '🌸', '💜'];
+
+        const romaticMessages = [
+            "Con un poco de paciencia...",
+            "Todo lo hermoso toma tiempo...",
+            "Me encanta tu toque de menta 🌿",
+            "Floreciendo poco a poco...",
+            "El amanecer se acerca ✨"
+        ];
+
+        // --- MOVIMIENTO ---
+        function movePlayer(x) {
+            if (!isGameRunning) return;
+            const screenWidth = window.innerWidth;
+            const playerWidth = player.offsetWidth;
+            let newX = x - (playerWidth / 2);
+            newX = Math.max(0, Math.min(newX, screenWidth - playerWidth));
+            player.style.left = newX + 'px';
+        }
+
+        gameScreen.addEventListener('touchmove', (e) => movePlayer(e.touches[0].clientX));
+        gameScreen.addEventListener('mousemove', (e) => movePlayer(e.clientX));
+
+        // --- CREAR OBJETOS CAYENDO ---
+        function spawnItem() {
+            if (!isGameRunning) return;
+            
+            const item = document.createElement('div');
+            item.className = 'falling-item';
+            item.innerText = fallingTypes[Math.floor(Math.random() * fallingTypes.length)];
+            item.style.top = '-50px';
+            item.style.left = Math.random() * (window.innerWidth - 50) + 'px';
+            
+            gameScreen.appendChild(item);
+            itemsOnScreen.push(item);
+        }
+
+        // --- PLANTAR UNA FLOR EN EL JARDÍN ---
+        function plantFlower(xPos) {
+            const flower = document.createElement('div');
+            flower.className = 'planted-flower';
+            flower.innerText = gardenFlowers[Math.floor(Math.random() * gardenFlowers.length)];
+            
+            // Distribuir a lo ancho del suelo, cerca de donde lo atrapó
+            let safeX = Math.max(10, Math.min(xPos, window.innerWidth - 40));
+            // Agregar un poco de caos para que no crezcan en línea recta perfecta
+            safeX += (Math.random() * 40 - 20); 
+            
+            flower.style.left = safeX + 'px';
+            // Variar el tamaño un poco
+            flower.style.fontSize = (Math.random() * 1.5 + 2) + 'rem';
+            
+            gardenFloor.appendChild(flower);
+        }
+
+        function createSparks(x, y) {
+            for(let i=0; i<5; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'sparkle';
+                spark.style.left = x + 'px';
+                spark.style.top = y + 'px';
+                
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 40 + 10;
+                spark.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
+                spark.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
+                
+                gameScreen.appendChild(spark);
+                setTimeout(() => spark.remove(), 600);
+            }
+        }
+
+        function showToast(text) {
+            clearTimeout(toastTimeout);
+            toastMessage.innerText = text;
+            toastMessage.classList.add('show-toast');
+            toastTimeout = setTimeout(() => {
+                toastMessage.classList.remove('show-toast');
+            }, 3000); 
+        }
+
+        // --- MOTOR DEL JUEGO ---
+        function updateGame() {
+            if (!isGameRunning) return;
+
+            const playerRect = player.getBoundingClientRect();
+
+            itemsOnScreen.forEach((item, i) => {
+                let currentTop = parseFloat(item.style.top);
+                item.style.top = (currentTop + 4) + 'px'; 
+
+                const itemRect = item.getBoundingClientRect();
+
+                // Colisión (Objeto Atrapado)
+                if (
+                    itemRect.bottom >= playerRect.top + 20 &&
+                    itemRect.top <= playerRect.bottom &&
+                    itemRect.right >= playerRect.left &&
+                    itemRect.left <= playerRect.right
+                ) {
+                    // Acción al atrapar
+                    createSparks(itemRect.left + 20, itemRect.bottom);
+                    plantFlower(playerRect.left + 20);
+                    
+                    item.remove();
+                    itemsOnScreen.splice(i, 1);
+                    
+                    score++;
+
+                    // --- MAGIA: CAMBIAR EL CIELO GRADUALMENTE ---
+                    // Mientras más plantas, más claro se hace el cielo
+                    const opacityLevel = score / targetScore;
+                    sunriseSky.style.opacity = opacityLevel;
+
+                    // Mensajes ocasionales
+                    if (score === 4) showToast(romaticMessages[0]);
+                    if (score === 8) showToast(romaticMessages[1]);
+                    if (score === 12) showToast(romaticMessages[2]);
+                    if (score === 16) showToast(romaticMessages[3]);
+
+                    if (score >= targetScore) {
+                        showToast(romaticMessages[4]);
+                        setTimeout(ganarJuego, 2000); // Espera 2 segs viendo el amanecer y su jardín
+                    }
+
+                    // Efecto de rebote en las manos
+                    player.style.transform = 'translateX(-50%) scale(1.15)';
+                    setTimeout(() => player.style.transform = 'translateX(-50%) scale(1)', 100);
+                } 
+                else if (currentTop > window.innerHeight) {
+                    item.remove();
+                    itemsOnScreen.splice(i, 1);
+                }
+            });
+
+            gameLoop = requestAnimationFrame(updateGame);
+        }
+
+        function ganarJuego() {
+            isGameRunning = false;
+            cancelAnimationFrame(gameLoop);
+            clearInterval(spawnInterval);
+            toastMessage.classList.remove('show-toast');
+            instructionText.style.opacity = '0';
+
+            itemsOnScreen.forEach(item => item.remove());
+            itemsOnScreen = [];
+
+            // Revelar carta
+            victoryScreen.style.display = 'flex';
+            setTimeout(() => {
+                victoryScreen.style.opacity = '1';
+                cardContent.style.transform = 'translateY(0)';
+            }, 50);
+        }
+
+        function reiniciarJuego() {
+            victoryScreen.style.opacity = '0';
+            cardContent.style.transform = 'translateY(30px)';
+            
+            setTimeout(() => {
+                victoryScreen.style.display = 'none';
+                instructionText.style.opacity = '1';
+                
+                // Reiniciar todo
+                score = 0;
+                sunriseSky.style.opacity = '0';
+                gardenFloor.innerHTML = ''; // Limpiar jardín
+                isGameRunning = true;
+                
+                iniciarJuego();
+            }, 1000);
+        }
+
+        function iniciarJuego() {
+            spawnInterval = setInterval(spawnItem, 650); 
+            updateGame();
+        }
+
+        iniciarJuego();
+    </script>
+</body>
+</html>
